@@ -1,0 +1,315 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create project files
+        run: |
+          set -e
+          mkdir -p proj && cd proj
+          mkdir -p 'app'
+          cat > 'app/build.gradle' <<'EOF_FILE_0'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'com.monthlymoney.app'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.monthlymoney.app"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes { release { minifyEnabled false } }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          EOF_FILE_0
+          mkdir -p 'app/src/main'
+          cat > 'app/src/main/AndroidManifest.xml' <<'EOF_FILE_1'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:label="Monthly Money"
+                  android:allowBackup="true"
+                  android:theme="@style/AppTheme">
+                  <activity android:name=".MainActivity" android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|uiMode">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF_FILE_1
+          mkdir -p 'app/src/main/assets'
+          cat > 'app/src/main/assets/index.html' <<'EOF_FILE_2'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+          <title>Monthly Money</title>
+          <style>
+          :root{--bg:#f6f7f5;--surface:#fff;--ink:#1c2420;--mute:#6b766f;--line:#e2e6e3;--accent:#1f6f5c;--accent-ink:#fff;--warn:#b4432f;--track:#e8ece9;
+          box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+          @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141916;--surface:#1c231f;--ink:#e8eeea;--mute:#8d9a92;--line:#2a332d;--accent:#58c4a6;--accent-ink:#0c1511;--warn:#e07a63;--track:#27302b}}
+          :root[data-theme="dark"]{--bg:#141916;--surface:#1c231f;--ink:#e8eeea;--mute:#8d9a92;--line:#2a332d;--accent:#58c4a6;--accent-ink:#0c1511;--warn:#e07a63;--track:#27302b}
+          *{box-sizing:border-box}
+          html{scroll-padding-top:env(safe-area-inset-top,0px)}
+          body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+          .app{max-width:480px;margin:0 auto;padding:16px 16px 40px}
+          header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+          .month{display:flex;align-items:center;gap:4px}
+          .month button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;cursor:pointer}
+          .month input{border:0;background:transparent;color:var(--ink);font:600 18px system-ui,sans-serif;text-align:center;width:150px}
+          select.cur{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px;font-size:14px}
+          nav{display:flex;background:var(--track);border-radius:10px;padding:3px;margin-bottom:16px}
+          nav button{flex:1;border:0;background:transparent;color:var(--mute);padding:9px;border-radius:8px;font:600 15px system-ui,sans-serif;cursor:pointer}
+          nav button.on{background:var(--surface);color:var(--ink)}
+          .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+          .left{font-size:40px;font-weight:700;letter-spacing:-1px;margin:2px 0 10px}
+          .left.neg{color:var(--warn)}
+          .sub{color:var(--mute);font-size:14px}
+          .bar{height:8px;background:var(--track);border-radius:4px;overflow:hidden;margin:10px 0}
+          .bar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+          .bar i.over{background:var(--warn)}
+          .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+          label{font-size:13px;color:var(--mute);display:block;margin-bottom:4px}
+          input.f,select.f{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:16px}
+          input.f:focus,button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+          .btn{border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:12px 16px;font:600 16px system-ui,sans-serif;cursor:pointer;width:100%}
+          .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+          .chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
+          .chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+          h2{font-size:15px;margin:0 0 10px}
+          .cat{margin-bottom:10px}
+          .cat .row{font-size:14px;margin-bottom:3px}
+          .item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+          .item:first-child{border-top:0}
+          .item .t{flex:1;min-width:0}
+          .item .t b{display:block;font-weight:600}
+          .item .t span{font-size:13px;color:var(--mute)}
+          .item .a{font-weight:600}
+          .x{border:0;background:transparent;color:var(--mute);font-size:20px;cursor:pointer;padding:4px 8px}
+          .empty{color:var(--mute);font-size:14px;text-align:center;padding:12px 0}
+          .disp{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;text-align:right}
+          .disp .e{min-height:22px;color:var(--mute);font-size:15px;word-break:break-all}
+          .disp .r{font-size:36px;font-weight:700;letter-spacing:-1px;word-break:break-all}
+          .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+          .pad button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:16px 0;font:500 20px system-ui,sans-serif;cursor:pointer}
+          .pad button.op{color:var(--accent);font-weight:700}
+          .pad button.eq{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+          .pad button:active{opacity:.7}
+          .hide{display:none}
+          </style>
+          </head>
+          <body>
+          <div class="app">
+            <header>
+              <div class="month">
+                <button id="prev" aria-label="Previous month">‹</button>
+                <input type="month" id="month" aria-label="Month">
+                <button id="next" aria-label="Next month">›</button>
+              </div>
+              <div class="sub">Bangladeshi Taka</div>
+            </header>
+
+            <nav>
+              <button id="t1" class="on">Month</button>
+              <button id="t2">Calculator</button>
+            </nav>
+
+            <section id="p1">
+              <div class="card">
+                <div class="sub">Left this month</div>
+                <div class="left" id="left">0</div>
+                <div class="bar"><i id="fill"></i></div>
+                <div class="row sub"><span>Spent <b id="spent" style="color:var(--ink)">0</b></span><span id="pct"></span></div>
+              </div>
+
+              <div class="card">
+                <label for="salary">Salary for this month</label>
+                <input class="f" id="salary" type="number" inputmode="decimal" placeholder="0">
+              </div>
+
+              <div class="card">
+                <h2>Add spending</h2>
+                <input class="f" id="amt" type="number" inputmode="decimal" placeholder="Amount">
+                <div class="chips" id="chips"></div>
+                <input class="f" id="note" type="text" placeholder="Note (optional)" maxlength="60" style="margin-bottom:12px">
+                <button class="btn" id="add">Add spending</button>
+              </div>
+
+              <div class="card" id="bycat"><h2>Where it went</h2><div id="cats"></div></div>
+
+              <div class="card"><h2>Spending</h2><div id="list"></div></div>
+            </section>
+
+            <section id="p2" class="hide">
+              <div class="disp"><div class="e" id="expr"></div><div class="r" id="res">0</div></div>
+              <div class="pad" id="pad"></div>
+              <button class="btn" id="use" style="margin-top:12px">Use result as spending amount</button>
+            </section>
+          </div>
+
+          <script>
+          const CATS=["Food","Rent","Transport","Bills","Shopping","Health","Other"];
+          let S={cur:"৳",months:{}};
+          let ym=new Date().toISOString().slice(0,7), cat=CATS[0];
+          const $=id=>document.getElementById(id);
+          function load(){try{const d=localStorage.getItem("monthlymoney");if(d)S=JSON.parse(d)}catch(e){}}
+          function save(){try{localStorage.setItem("monthlymoney",JSON.stringify(S))}catch(e){}}
+          function M(){return S.months[ym]||(S.months[ym]={salary:0,items:[]})}
+          function fmt(n){return S.cur+" "+Number(n).toLocaleString(undefined,{maximumFractionDigits:2})}
+          function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+          function render(){
+            const m=M(), spent=m.items.reduce((a,b)=>a+b.amt,0), left=m.salary-spent;
+            $("month").value=ym;
+            $("salary").value=m.salary||"";
+            const l=$("left"); l.textContent=fmt(left); l.classList.toggle("neg",left<0);
+            $("spent").textContent=fmt(spent);
+            const p=m.salary>0?Math.min(100,spent/m.salary*100):0;
+            const f=$("fill"); f.style.width=p+"%"; f.classList.toggle("over",spent>m.salary&&m.salary>0);
+            $("pct").textContent=m.salary>0?Math.round(spent/m.salary*100)+"% of salary":"Enter salary to track";
+            $("chips").innerHTML=CATS.map(c=>`<button class="chip${c===cat?" on":""}" data-c="${c}">${c}</button>`).join("");
+            const tot={};m.items.forEach(i=>tot[i.cat]=(tot[i.cat]||0)+i.amt);
+            const keys=Object.keys(tot).sort((a,b)=>tot[b]-tot[a]);
+            $("cats").innerHTML=keys.length?keys.map(k=>`<div class="cat"><div class="row"><span>${k}</span><span>${fmt(tot[k])}</span></div><div class="bar" style="margin:0"><i style="width:${tot[k]/spent*100}%"></i></div></div>`).join(""):'<div class="empty">Nothing spent yet</div>';
+            $("list").innerHTML=m.items.length?m.items.slice().reverse().map(i=>`<div class="item"><div class="t"><b>${esc(i.note||i.cat)}</b><span>${i.cat} · ${i.date}</span></div><div class="a">${fmt(i.amt)}</div><button class="x" data-d="${i.id}" aria-label="Delete">×</button></div>`).join(""):'<div class="empty">Add your first spending above</div>';
+          }
+          function shift(d){const [y,mo]=ym.split("-").map(Number);const dt=new Date(y,mo-1+d,1);ym=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0");render()}
+
+          $("prev").onclick=()=>shift(-1);$("next").onclick=()=>shift(1);
+          $("month").onchange=e=>{if(e.target.value){ym=e.target.value;render()}};
+          $("salary").oninput=e=>{M().salary=parseFloat(e.target.value)||0;save();const m=M(),spent=m.items.reduce((a,b)=>a+b.amt,0);const left=m.salary-spent;$("left").textContent=fmt(left);$("left").classList.toggle("neg",left<0);$("fill").style.width=(m.salary>0?Math.min(100,spent/m.salary*100):0)+"%";$("fill").classList.toggle("over",spent>m.salary&&m.salary>0);$("pct").textContent=m.salary>0?Math.round(spent/m.salary*100)+"% of salary":"Enter salary to track"};
+          $("chips").onclick=e=>{const c=e.target.dataset.c;if(c){cat=c;render()}};
+          $("add").onclick=()=>{const a=parseFloat($("amt").value);if(!(a>0)){$("amt").focus();return}
+            M().items.push({id:Date.now(),amt:a,cat,note:$("note").value.trim(),date:new Date().toLocaleDateString(undefined,{day:"numeric",month:"short"})});
+            $("amt").value="";$("note").value="";save();render()};
+          $("list").onclick=e=>{const d=e.target.dataset.d;if(d){const m=M();m.items=m.items.filter(i=>String(i.id)!==d);save();render()}};
+
+          function tab(n){$("p1").classList.toggle("hide",n!==1);$("p2").classList.toggle("hide",n!==2);$("t1").classList.toggle("on",n===1);$("t2").classList.toggle("on",n===2)}
+          $("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);
+
+          /* calculator */
+          let ex="";
+          const keys=["C","⌫","%","÷","7","8","9","×","4","5","6","−","1","2","3","+","0",".","=","="];
+          const pad=$("pad");
+          ["C","⌫","%","÷","7","8","9","×","4","5","6","−","1","2","3","+","0","."].forEach(k=>{
+            const b=document.createElement("button");b.textContent=k;if("C⌫%÷×−+".includes(k))b.className="op";b.dataset.k=k;pad.appendChild(b)});
+          const eq=document.createElement("button");eq.textContent="=";eq.className="eq";eq.style.gridColumn="span 2";eq.dataset.k="=";pad.appendChild(eq);
+          function calc(s){
+            if(!s)return null;
+            const t=s.replace(/÷/g,"/").replace(/×/g,"*").replace(/−/g,"-").replace(/(\d+\.?\d*)%/g,"($1/100)");
+            if(!/^[0-9+\-*/().\s]+$/.test(t))return null;
+            try{const v=Function('"use strict";return ('+t+')')();return isFinite(v)?Math.round(v*1e8)/1e8:null}catch(e){return null}
+          }
+          function show(){$("expr").textContent=ex;const v=calc(ex);$("res").textContent=v===null?(ex?"…":"0"):v.toLocaleString(undefined,{maximumFractionDigits:8})}
+          pad.onclick=e=>{const k=e.target.dataset.k;if(!k)return;
+            if(k==="C")ex="";
+            else if(k==="⌫")ex=ex.slice(0,-1);
+            else if(k==="="){const v=calc(ex);if(v!==null)ex=String(v)}
+            else{const last=ex.slice(-1);if("÷×−+".includes(k)&&"÷×−+".includes(last))ex=ex.slice(0,-1);ex+=k}
+            show()};
+          $("use").onclick=()=>{const v=calc(ex);if(v!==null&&v>0){$("amt").value=v;tab(1);$("amt").focus()}};
+
+          load();S.cur="৳";render();show();
+          </script>
+          </body>
+          </html>
+          EOF_FILE_2
+          mkdir -p 'app/src/main/java/com/monthlymoney/app'
+          cat > 'app/src/main/java/com/monthlymoney/app/MainActivity.java' <<'EOF_FILE_3'
+          package com.monthlymoney.app;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+
+          public class MainActivity extends Activity {
+              private WebView web;
+
+              @Override
+              protected void onCreate(Bundle b) {
+                  super.onCreate(b);
+                  web = new WebView(this);
+                  setContentView(web);
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);   // keeps saved salary and spending
+                  s.setAllowFileAccess(true);
+                  if (b == null) web.loadUrl("file:///android_asset/index.html");
+                  else web.restoreState(b);
+              }
+
+              @Override
+              protected void onSaveInstanceState(Bundle out) {
+                  super.onSaveInstanceState(out);
+                  web.saveState(out);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+          }
+          EOF_FILE_3
+          mkdir -p 'app/src/main/res/values'
+          cat > 'app/src/main/res/values/styles.xml' <<'EOF_FILE_4'
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:windowBackground">@android:color/white</item>
+                  <item name="android:statusBarColor">#F6F7F5</item>
+                  <item name="android:windowLightStatusBar">true</item>
+              </style>
+          </resources>
+          EOF_FILE_4
+          cat > 'build.gradle' <<'EOF_FILE_5'
+          plugins { id 'com.android.application' version '8.5.2' apply false }
+          EOF_FILE_5
+          cat > 'gradle.properties' <<'EOF_FILE_6'
+          org.gradle.jvmargs=-Xmx2048m
+          android.useAndroidX=false
+          EOF_FILE_6
+          mkdir -p 'gradle/wrapper'
+          cat > 'gradle/wrapper/gradle-wrapper.properties' <<'EOF_FILE_7'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.7-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF_FILE_7
+          cat > 'settings.gradle' <<'EOF_FILE_8'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          rootProject.name = "MonthlyMoney"
+          include ":app"
+          EOF_FILE_8
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Build APK
+        working-directory: proj
+        run: gradle assembleDebug --no-daemon
+      - name: Publish APK to Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp proj/app/build/outputs/apk/debug/app-debug.apk MonthlyMoney.apk
+          gh release create "v${{ github.run_number }}" MonthlyMoney.apk --title "Monthly Money v${{ github.run_number }}" --notes "Download MonthlyMoney.apk and install it."
